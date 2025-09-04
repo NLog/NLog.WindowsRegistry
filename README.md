@@ -1,5 +1,8 @@
 # NLog Registry LayoutRenderer
 
+[![Version](https://badge.fury.io/nu/NLog.WindowsRegistry.svg)](https://www.nuget.org/packages/NLog.WindowsRegistry)
+[![AppVeyor](https://img.shields.io/appveyor/ci/nlog/NLog-WindowsRegistry/master.svg)](https://ci.appveyor.com/project/nlog/NLog-WindowsRegistry/branch/master)
+
 NLog Registry LayoutRenderer to output value from Windows Registry.
 
 If having trouble with output, then check [NLog InternalLogger](https://github.com/NLog/NLog/wiki/Internal-Logging) for clues. See also [Troubleshooting NLog](https://github.com/NLog/NLog/wiki/Logging-Troubleshooting)
