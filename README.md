@@ -1,7 +1,7 @@
 # NLog Registry LayoutRenderer
 
 [![Version](https://badge.fury.io/nu/NLog.WindowsRegistry.svg)](https://www.nuget.org/packages/NLog.WindowsRegistry)
-[![AppVeyor](https://img.shields.io/appveyor/ci/nlog/NLog-WindowsRegistry/master.svg)](https://ci.appveyor.com/project/nlog/NLog-WindowsRegistry/branch/master)
+[![GitHub Actions](https://github.com/NLog/NLog.WindowsRegistry/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/NLog/NLog.WindowsRegistry/actions/workflows/ci.yml)
 
 NLog Registry LayoutRenderer to output value from Windows Registry.
 

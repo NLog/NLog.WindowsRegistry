@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore solution
+        run: dotnet restore NLog.WindowsRegistry.sln
+
+      - name: Build solution
+        run: dotnet build NLog.WindowsRegistry.sln --configuration Release --no-restore
+
+      - name: Pack NuGet packages
+        run: >-
+          dotnet pack NLog.WindowsRegistry.sln --configuration Release --no-build --no-restore
+          /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg
+          /p:ContinuousIntegrationBuild=true /p:EmbedUntrackedSources=true
+          /p:PublishRepositoryUrl=true
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nlog-packages
+          path: |
+            src/NLog.WindowsRegistry/bin/Release/*.nupkg
+            src/NLog.WindowsRegistry/bin/Release/*.snupkg
+          if-no-files-found: error
+
+  test:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: [net462, net8.0]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test ${{ matrix.framework }}
+        run: >-
+          dotnet test tests/NLog.WindowsRegistry.Tests/NLog.WindowsRegistry.Tests.csproj
+          --configuration Release --framework ${{ matrix.framework }}
+          --logger GitHubActions --collect:"XPlat Code Coverage"
+          --results-directory TestResults/${{ matrix.framework }}
+          -- RunConfiguration.DisableAppDomain=true
+
+      - name: Upload Cobertura coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.framework }}
+          path: TestResults/${{ matrix.framework }}/**/coverage.cobertura.xml
+          if-no-files-found: error
+
+  coverage:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # 7.1.1
+        with:
+          files: coverage/**/coverage.cobertura.xml

@@ -8,9 +8,7 @@
     <VersionPrefix>6.0.3</VersionPrefix>
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
     <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
-    <AppVeyorBuildNumber>$(APPVEYOR_BUILD_NUMBER)</AppVeyorBuildNumber>
-    <AppVeyorBuildNumber Condition="'$(AppVeyorBuildNumber)' == ''">0</AppVeyorBuildNumber>
-    <FileVersion>$(VersionPrefix).$(AppVeyorBuildNumber)</FileVersion>
+    <FileVersion>$(VersionPrefix).0</FileVersion>
 
     <Title>NLog Windows Registry</Title>
     <Company>NLog</Company>
@@ -79,7 +77,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.303" PrivateAssets="All" />
     <PackageReference Include="NLog" Version="6.0.3" />
   </ItemGroup>
 
