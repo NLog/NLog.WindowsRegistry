@@ -2,6 +2,7 @@
 
 [![Version](https://badge.fury.io/nu/NLog.WindowsRegistry.svg)](https://www.nuget.org/packages/NLog.WindowsRegistry)
 [![GitHub Actions](https://github.com/NLog/NLog.WindowsRegistry/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/NLog/NLog.WindowsRegistry/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NLog/NLog.WindowsRegistry/graph/badge.svg?token=QI6IMYJLWL)](https://codecov.io/gh/NLog/NLog.WindowsRegistry)
 
 NLog Registry LayoutRenderer to output value from Windows Registry.
 
