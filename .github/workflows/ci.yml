@@ -2,77 +2,114 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   pull_request:
-    branches: [master]
+  workflow_dispatch:
+    inputs:
+      force_nuget_publish:
+        description: Force NuGet publish # for non-master. The package version gets a suffix. See Create NuGet package step
+        type: boolean
+        default: false
 
-permissions:
-  contents: read
+env:
+  SOLUTION: NLog.WindowsRegistry.sln
 
 jobs:
   build:
+    name: Build & test (Windows)
     runs-on: windows-latest
+    permissions:
+      contents: read
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Restore solution
-        run: dotnet restore NLog.WindowsRegistry.sln
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
 
-      - name: Build solution
-        run: dotnet build NLog.WindowsRegistry.sln --configuration Release --no-restore
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release --no-restore
 
-      - name: Pack NuGet packages
-        run: >-
-          dotnet pack NLog.WindowsRegistry.sln --configuration Release --no-build --no-restore
-          /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg
-          /p:ContinuousIntegrationBuild=true /p:EmbedUntrackedSources=true
-          /p:PublishRepositoryUrl=true
-
-      - name: Upload NuGet packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: nlog-packages
-          path: |
-            src/NLog.WindowsRegistry/bin/Release/*.nupkg
-            src/NLog.WindowsRegistry/bin/Release/*.snupkg
-          if-no-files-found: error
-
-  test:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        framework: [net462, net8.0]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Test ${{ matrix.framework }}
-        run: >-
-          dotnet test tests/NLog.WindowsRegistry.Tests/NLog.WindowsRegistry.Tests.csproj
-          --configuration Release --framework ${{ matrix.framework }}
-          --logger GitHubActions --collect:"XPlat Code Coverage"
-          --results-directory TestResults/${{ matrix.framework }}
-          -- RunConfiguration.DisableAppDomain=true
-
-      - name: Upload Cobertura coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.framework }}
-          path: TestResults/${{ matrix.framework }}/**/coverage.cobertura.xml
-          if-no-files-found: error
-
-  coverage:
-    needs: test
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: coverage
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build --collect:"XPlat Code Coverage" --logger GitHubActions -- RunConfiguration.DisableAppDomain=true
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # 7.1.1
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # https://github.com/codecov/codecov-action/releases/tag/v7.1.1
         with:
-          files: coverage/**/coverage.cobertura.xml
+          token: ${{ secrets.CODECOV_TOKEN }} # Needed for protected branches
+          files: tests/**/TestResults/**/coverage.cobertura.xml
+          fail_ci_if_error: true
+
+  pack:
+    name: Create NuGet package
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Determine version suffix
+        id: version
+        shell: pwsh
+        env:
+          REF: ${{ github.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if ($env:REF -eq "refs/heads/master") {
+            echo "suffix=" >> $env:GITHUB_OUTPUT
+          } elseif ($env:PR_NUMBER) {
+            echo "suffix=pr.$($env:PR_NUMBER).ci.$($env:RUN_NUMBER)" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "suffix=ci.$($env:RUN_NUMBER)" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Create NuGet package
+        shell: pwsh
+        env:
+          VERSION_SUFFIX: ${{ steps.version.outputs.suffix }}
+        run: dotnet pack $env:SOLUTION --no-restore --configuration Release --output artifacts -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:EmbedUntrackedSources=true -p:ContinuousIntegrationBuild=true -p:PublishRepositoryUrl=true --version-suffix "$env:VERSION_SUFFIX"
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v7
+        with:
+          name: NuGetPackages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error
+
+  publish:
+    name: Publish NuGet package
+    needs: [build, pack]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && inputs.force_nuget_publish)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download NuGet package
+        uses: actions/download-artifact@v7
+        with:
+          name: NuGetPackages
+          path: artifacts
+
+      - name: NuGet login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet.org
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
