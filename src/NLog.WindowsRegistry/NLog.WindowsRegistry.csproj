@@ -5,7 +5,7 @@
     <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' AND '$(VisualStudioVersion)' &lt; '17.0' ">net35;net46;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' ">net35;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
 
-    <VersionPrefix>6.0.3</VersionPrefix>
+    <VersionPrefix>6.2.2</VersionPrefix>
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
     <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
     <FileVersion>$(VersionPrefix).0</FileVersion>
@@ -20,7 +20,8 @@
     <Copyright>Copyright (c) 2004-$(CurrentYear) NLog Project - https://nlog-project.org/ </Copyright>
 
     <PackageReleaseNotes>
- Removed .NET 4.5 binary (note .NET 4.5 is End of Life)
+- Update NLog to 6.2.2
+- Removed .NET 4.5 binary (note .NET 4.5 is End of Life)
 
       RegistryLayoutRenderer Docs:
       https://github.com/NLog/NLog/wiki/Registry-Layout-Renderer
@@ -80,7 +81,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.303" PrivateAssets="All" />
-    <PackageReference Include="NLog" Version="6.0.3" />
+    <PackageReference Include="NLog" Version="6.2.2" />
   </ItemGroup>
 
   <PropertyGroup>
