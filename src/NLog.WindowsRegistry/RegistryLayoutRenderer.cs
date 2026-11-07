@@ -136,7 +136,7 @@ namespace NLog.LayoutRenderers
                 {
                     if (parseResult.HasSubKey)
                     {
-                        using (RegistryKey registryKey = rootKey.OpenSubKey(parseResult.SubKey))
+                        using (RegistryKey? registryKey = rootKey.OpenSubKey(parseResult.SubKey))
                         {
                             if (registryKey != null) registryValue = registryKey.GetValue(registryName);
                         }
