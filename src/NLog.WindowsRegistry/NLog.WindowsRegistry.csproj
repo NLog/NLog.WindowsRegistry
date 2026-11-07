@@ -20,9 +20,7 @@
     <Copyright>Copyright (c) 2004-$(CurrentYear) NLog Project - https://nlog-project.org/ </Copyright>
 
     <PackageReleaseNotes>
-- Update NLog to 6.2.2
 - Update Microsoft.Win32.Registry to 5.0.0
-- Removed .NET 4.5 binary (note .NET 4.5 is End of Life)
 
       RegistryLayoutRenderer Docs:
       https://github.com/NLog/NLog/wiki/Registry-Layout-Renderer
